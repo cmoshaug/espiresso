@@ -4,6 +4,7 @@
 //-----------------------------------------------------------------------------
 
 #include <string>
+#include "timing.h"
 
 //-----------------------------------------------------------------------------
 
@@ -23,6 +24,7 @@ private:
 
 private:
 	std::string m_sensorPath;	///< Path to sensor on file system
+        Timer m_timer;                  ///< Timer to delay if sensor doesn't read
 };
 
 //-----------------------------------------------------------------------------

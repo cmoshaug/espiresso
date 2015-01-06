@@ -11,12 +11,14 @@ Temperature::Temperature()
 {
 	// attempt to find the sensor path on the filesystem
 	m_sensorPath = findSensorPath();
+	m_timer = Timer();
 }
 
 //-----------------------------------------------------------------------------
 
 bool Temperature::getDegrees( double *value ) const
 {
+    int timeouts = 0;
     // attempt to open the sensor
     ifstream sensor( m_sensorPath.c_str() );
 
@@ -28,9 +30,11 @@ bool Temperature::getDegrees( double *value ) const
 
     //check is output is good
     while(line.substr(size-3,3) != "YES"){
-      time.sleep(0.2);
+      if ( timeouts > 5 ){ return false;}
+      m_timer.delayms(200);
       ifstream sensor( m_sensorPath.c_str() ); 
       getline( sensor, line );
+      timeouts+=1;
     }
 
     //get temperature line

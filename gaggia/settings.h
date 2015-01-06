@@ -10,16 +10,6 @@
 // NOTE: this is now using hardware PWM
 #define SSRPIN 18
 
-// GPIO pin used for the Pump
-#define PUMP_PIN 15
-
-// GPIO pin used by flow sensor
-#define FLOWPIN 27
-
-// GPIO pins used by ultrasonic ranger
-#define RANGER_TRIGGER_OUT 23
-#define RANGER_ECHO_IN 22
-
 // GPIO pins used for buttons
 #define BUTTON1_PIN 2
 #define BUTTON2_PIN 3

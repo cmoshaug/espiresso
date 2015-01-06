@@ -53,7 +53,6 @@ private:
 	bool		m_dirty;	///< Does the display need updating?
 
 	double 		m_degrees;	///< Temperature in degrees
-	double		m_level;	///< Water level display
 
     /// Rendering thread
     std::thread m_thread;

@@ -14,7 +14,6 @@ Display::Display() :
 	m_run( true ),
 	m_dirty( false ),
 	m_degrees( 0.0 ),
-	m_level( 0.0 ),
 	m_width( 320 ),
 	m_height( 240 )
 {
@@ -41,18 +40,6 @@ Display & Display::updateTemperature( double degrees )
 		m_dirty = true;
 
 	m_degrees = degrees;
-
-	return *this;
-}
-
-//-----------------------------------------------------------------------------
-
-Display & Display::updateLevel( double level )
-{
-	std::lock_guard<std::mutex> lock( m_mutex );
-
-	m_level = std::max( std::min(level, 1.0) , 0.0 );
-	m_dirty = true;
 
 	return *this;
 }
@@ -146,7 +133,6 @@ void Display::worker()
 void Display::render()
 {
 	double degrees = 0.0;
-	double level   = 0.0;
 
 	// size of screen border
 	const int border = 10;
@@ -154,7 +140,6 @@ void Display::render()
 	{
 		std::lock_guard<std::mutex> lock( m_mutex );
 		degrees = m_degrees;
-		level   = m_level;
 	}
 
 	static const SDL_Color
@@ -172,23 +157,6 @@ void Display::render()
 	Uint32 rgbCyan = SDL_MapRGB( m_display->format, 0, 255, 255 );
 	Uint32 rgbBlue = SDL_MapRGB( m_display->format, 0,   0, 255 );
 
-	// draw water level bar
-	short maxWidth = 300;
-	Uint16 width = static_cast<Uint16>(
-		level * static_cast<double>(maxWidth) + 0.5
-	);
-	Uint16 height = 10;
-	short left	 = 10;
-	short top	 = 240 - height - 10;
-	SDL_Rect rect = { left, top, width, height };
-
-	SDL_FillRect( m_display, &rect, rgbCyan );
-
-	rect.x = left + width;
-	rect.w = maxWidth - width;
-	SDL_FillRect( m_display, &rect, rgbBlue );
-
-	SDL_Flip( m_display );
 }
 
 //-----------------------------------------------------------------------------

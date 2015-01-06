@@ -41,7 +41,6 @@ double g_autoPowerOff = 0.0;
 Timer g_lastUsed;           ///< When was the last use? (user interaction)
 
 Pump      g_pump;           ///< Pump controller
-Flow      g_flow;           ///< Flow sensor
 Inputs    g_inputs;         ///< Inputs (buttons)
 Regulator g_regulator;      ///< Temperature regulator
 
@@ -77,17 +76,7 @@ void buttonHandler(
     case 1:
         if ( state ) {
             // button 1 pushed
-
-            // if the pump is idle
-            if ( !g_pump.getState() ) {
-                // ask the flow sensor to notify us after a shot
-                // has been dispensed
-                g_flow.notifyAfter( g_shotSize / 1000.0 );
-                // turn on the pump
-                g_pump.setState( true );
-            } else {
-                // pump is already running: turn it off
-                g_pump.setState( false );
+	    cout << "gaggia: button 1 pressed, but there is no button 1!?";
             }
         } else {
             // button 1 released
@@ -114,30 +103,6 @@ void buttonHandler(
         }
         break;
     }
-}
-
-//-----------------------------------------------------------------------------
-
-/// Called when notifications are received from the flow sensor
-static void flowHandler( Flow::NotifyType type ) {
-    // reset the timer when the pump is used (e.g. via front panel switch)
-    g_lastUsed.reset();
-
-	switch ( type ) {
-	case Flow::Start :
-		cout << "flow: started\n";
-		break;
-
-	case Flow::Stop  :
-		cout << "flow: stopped\n";
-		break;
-
-	case Flow::Target:
-		cout << "flow: target reached\n";
-        // stop the pump
-        g_pump.setState( false );
-		break;
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -208,18 +173,11 @@ int runController(
     }
 
 	Display display;
-	Ranger ranger;
 
 	// open log file
 	ofstream out( fileName.c_str() );
 	if ( !out ) {
 		cerr << "error: unable to open log file " << fileName << endl;
-		return 1;
-	}
-
-	// check that flow meter is available
-	if ( !g_flow.ready() ) {
-		out << "error: flow meter not ready\n";
 		return 1;
 	}
 
@@ -229,9 +187,6 @@ int runController(
 			<< configFile << endl;
 		return 1;
 	}
-
-    // shot size in millilitres
-    g_shotSize = config["shotSize"];
 
     // read auto cut out time (the value in the file is in minutes,
     // and we convert to seconds here)
@@ -301,35 +256,20 @@ int runController(
 		// get the latest boiler power level
 		double powerLevel = g_regulator.getPowerLevel();
 
-		// number of millilitres of water drawn up by the pump
-		double ml = 1000.0 * g_flow.getLitres();
-
 		// dump values to log file
 		sprintf(
 			buffer,
-			"%.3lf,%.2lf,%.2lf,%.1lf",
-			elapsed, powerLevel, latestTemp, ml
+			"%.3lf,%.2lf,%.2lf",
+			elapsed, powerLevel, latestTemp
 		);
 		out << buffer << endl;
 
 		if (interactive) {
-			printf( "%.2lf %.2lf %.1lf\n", elapsed, latestTemp, ml );
+			printf( "%.2lf %.2lf\n", elapsed, latestTemp );
 		}
 
 		// update temperature display
 		display.updateTemperature( latestTemp );
-
-        // range measurement (convert to mm)
-        double range = 1000.0 * ranger.getRange();
-
-		// simplistic conversion to water level
-		double minDist = 20.0;
-		double maxDist = 100.0;
-		range = std::max( minDist, std::min( range, maxDist ) );
-		double level = 1.0 - (range - minDist) / (maxDist - minDist);
-
-		// update water level display
-		display.updateLevel( level );
 
         // if auto cut out is enabled (greater than one second) and if too
         // much time has elapsed since the last user interaction, and the
@@ -374,23 +314,12 @@ int runController(
 int runTests()
 {
     Temperature temperature;
-    Ranger ranger;
     System system;
 	Display display;
-
-    cout << "flow: " <<
-        (g_flow.ready() ? "ready" : "not ready")
-        << endl;
 
     cout << "temp: " <<
         (temperature.getDegrees(0) ? "ready" : "not ready")
         << endl;
-
-	cout << "range: " <<
-		(ranger.initialise() ? "ready" : "not ready")
-		<< endl;
-
-	g_flow.notifyAfter( g_shotSize / 1000.0 );
 
     nonblock(1);
 
@@ -414,24 +343,6 @@ int runTests()
 
 			bool stop = false;
 			switch ( tolower(key) ) {
-			case 'p':
-                if ( !g_pump.getState() ) {
-                    g_flow.notifyAfter( 60.0 / 1000.0 );
-                }
-				g_pump.setState( !g_pump.getState() );
-				cout << "pump: " << (g_pump.getState() ? "on" : "off") << endl;
-				break;
-
-            case 'r':
-                {
-                    double range = 0.0;
-                    const int count = 50;
-                    for (int i=0; i<count; ++i)
-                        range += ranger.getRange() * 1000.0;
-                    cout << "range average: " << range / static_cast<double>(count) << endl;
-                }
-                break;
-
 			default:
 				stop = true;
 			}
@@ -443,19 +354,10 @@ int runTests()
         double temp = 0.0;
         temperature.getDegrees( &temp );
 
-        // read core temperature
-        double coreTemp = system.getCoreTemperature();
-
-        // number of millilitres of water drawn up by the pump
-        double ml = 1000.0 * g_flow.getLitres();
-
-        // range measurement (convert to mm)
-        double range = 1000.0 * ranger.getRange();
-
         // print sensor values
         printf(
-			"%.2lfC %.2lfC %.1lfml %.0lfmm\n",
-			temp, coreTemp, ml, range
+			"%.2lfC\n",
+			temp
 		);
 
 		// update temperature on display
@@ -490,7 +392,6 @@ int main( int argc, char **argv )
 
     // register notification handlers
     g_inputs.notifyRegister( &buttonHandler );
-    g_flow.notifyRegister( &flowHandler );
 
 	if ( argc < 2 ) {
 		cerr << "gaggia: expected a command\n";

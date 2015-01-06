@@ -27,16 +27,16 @@ bool Temperature::getDegrees( double *value ) const
     int size = line.length();
 
     //check is output is good
-    while(line.substr(size-3,3) != 'YES'){
+    while(line.substr(size-3,3) != "YES"){
       time.sleep(0.2);
       ifstream sensor( m_sensorPath.c_str() ); 
-      getline( sensor, line )
+      getline( sensor, line );
     }
 
     //get temperature line
     getline( sensor, line );
     size = line.length();
-    temp = line.substr(size-5,5)
+    temp = line.substr(size-5,5);
 
     // convert to degrees
     double degrees = static_cast<double>( atoi(temp.c_str()) ) / 1000.0;

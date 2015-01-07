@@ -157,6 +157,7 @@ void Display::render()
 	Uint32 rgbCyan = SDL_MapRGB( m_display->format, 0, 255, 255 );
 	Uint32 rgbBlue = SDL_MapRGB( m_display->format, 0,   0, 255 );
 
+        SDL_Flip( m_display );
 }
 
 //-----------------------------------------------------------------------------

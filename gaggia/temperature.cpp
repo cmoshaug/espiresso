@@ -30,6 +30,7 @@ bool Temperature::getDegrees( double *value ) const
 
     //check is output is good
     while(line.substr(size-3,3) != "YES"){
+      cout << "gaggia: temperature timeout" << endl;
       if ( timeouts > 5 ){ return false;}
       delayms(200);
       ifstream sensor( m_sensorPath.c_str() ); 

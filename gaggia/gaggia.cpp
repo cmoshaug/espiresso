@@ -10,9 +10,6 @@
 
 #include "timing.h"
 #include "regulator.h"
-#include "flow.h"
-#include "pump.h"
-#include "ranger.h"
 #include "keyboard.h"
 #include "inputs.h"
 #include "system.h"
@@ -33,14 +30,11 @@ bool g_enableBoiler = true;	///< Enable boiler if true
 bool g_quit = false;		///< Should we quit?
 bool g_halt = false;        ///< Should we halt? (shutdown the system)
 
-double g_shotSize = 60.0;   ///< Shot size in ml
-
 /// Automatic power off time in seconds. Zero disables the time out.
 double g_autoPowerOff = 0.0;
 
 Timer g_lastUsed;           ///< When was the last use? (user interaction)
 
-Pump      g_pump;           ///< Pump controller
 Inputs    g_inputs;         ///< Inputs (buttons)
 Regulator g_regulator;      ///< Temperature regulator
 
@@ -78,7 +72,7 @@ void buttonHandler(
             // button 1 pushed
 	    cout << "gaggia: button 1 pressed, but there is no button 1!?";
             }
-        } else {
+        else {
             // button 1 released
         }
         break;
